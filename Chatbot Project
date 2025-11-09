@@ -1,30 +1,99 @@
-def chatbot_response(user_input):
-    user_input = user_input.lower()
+import math
 
-    if "hello" in user_input or "hi" in user_input:
-        return "Hello! How can I assist you today?"
-    elif "how are you" in user_input:
-        return "I'm just a program, but I'm functioning perfectly! How are you?"
-    elif "your name" in user_input:
-        return "I am a Rule-Based Chatbot, created for this internship task."
-    elif "bye" in user_input or "exit" in user_input:
-        return "Goodbye! Have a great day ahead."
-    elif "help" in user_input:
-        return "I can respond to greetings, tell you my name, and chat with you briefly."
+board = [" " for _ in range(9)]
+
+def print_board(board):
+    for row in [board[i*3:(i+1)*3] for i in range(3)]:
+        print("| " + " | ".join(row) + " |")
+
+def winner(board, player):
+    win_conditions = [
+        [0,1,2], [3,4,5], [6,7,8], 
+        [0,3,6], [1,4,7], [2,5,8],  
+        [0,4,8], [2,4,6]           
+    ]
+    return any(all(board[i] == player for i in combo) for combo in win_conditions)
+
+def is_full(board):
+    return " " not in board
+
+def minimax(board, depth, is_maximizing, alpha=-math.inf, beta=math.inf):
+    if winner(board, "O"):
+        return 1
+    elif winner(board, "X"):
+        return -1
+    elif is_full(board):
+        return 0
+
+    if is_maximizing:
+        max_eval = -math.inf
+        for i in range(9):
+            if board[i] == " ":
+                board[i] = "O"
+                eval = minimax(board, depth+1, False, alpha, beta)
+                board[i] = " "
+                max_eval = max(max_eval, eval)
+                alpha = max(alpha, eval)
+                if beta <= alpha:
+                    break
+        return max_eval
     else:
-        return "Sorry, I don't understand that yet."
+        min_eval = math.inf
+        for i in range(9):
+            if board[i] == " ":
+                board[i] = "X"
+                eval = minimax(board, depth+1, True, alpha, beta)
+                board[i] = " "
+                min_eval = min(min_eval, eval)
+                beta = min(beta, eval)
+                if beta <= alpha:
+                    break
+        return min_eval
 
-def main():
-    print("Rule-Based Chatbot — Internship Task")
-    print("Type 'bye' to exit the chat.\n")
+def best_move(board):
+    best_val = -math.inf
+    move = -1
+    for i in range(9):
+        if board[i] == " ":
+            board[i] = "O"
+            move_val = minimax(board, 0, False)
+            board[i] = " "
+            if move_val > best_val:
+                best_val = move_val
+                move = i
+    return move
+
+def play():
+    print("Welcome to Tic-Tac-Toe! You are X, AI is O.")
+    print_board(board)
 
     while True:
-        user_text = input("You: ")
-        if user_text.lower() in ["bye", "exit"]:
-            print("Bot: Goodbye! Have a great day.")
-            break
-        response = chatbot_response(user_text)
-        print("Bot:", response)
+        
+        move = int(input("Enter your move (1-9): ")) - 1
+        if board[move] != " ":
+            print("Invalid move! Try again.")
+            continue
+        board[move] = "X"
 
-if __name__ == "__main__":
-    main()               
+        if winner(board, "X"):
+            print_board(board)
+            print("🎉 You win!")
+            break
+        if is_full(board):
+            print_board(board)
+            print("🤝 It's a draw!")
+            break
+
+        ai_move = best_move(board)
+        board[ai_move] = "O"
+
+        print_board(board)
+
+        if winner(board, "O"):
+            print("💻 AI wins!")
+            break
+        if is_full(board):
+            print("🤝 It's a draw!")
+            break
+
+play()
